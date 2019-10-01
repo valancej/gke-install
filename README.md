@@ -5,16 +5,16 @@ This document will walkthrough the installation of Anchore Enterprise on an Goog
 ## Prerequisites
 
 - A running GKE cluster with worker nodes launched. See [GKE Documentation](https://cloud.google.com/kubernetes-engine/docs/) for more information on this setup. 
-- [Helm](https://helm.sh/) client and server installed and configured with your EKS cluster. 
+- [Helm](https://helm.sh/) client and server installed and configured with your GKE cluster. 
 
 Once you have a GKE cluster up and running with worker nodes launched, you can verity via the followiing command. 
 
 ```
 $ kubectl get nodes
-NAME                             STATUS   ROLES    AGE   VERSION
-ip-192-168-2-164.ec2.internal    Ready    <none>   10m   v1.14.6-eks-5047ed
-ip-192-168-35-43.ec2.internal    Ready    <none>   10m   v1.14.6-eks-5047ed
-ip-192-168-55-228.ec2.internal   Ready    <none>   10m   v1.14.6-eks-5047ed
+NAME                                                STATUS   ROLES    AGE   VERSION
+gke-standard-cluster-1-default-pool-c04de8f1-hpk4   Ready    <none>   78s   v1.13.7-gke.24
+gke-standard-cluster-1-default-pool-c04de8f1-m03k   Ready    <none>   79s   v1.13.7-gke.24
+gke-standard-cluster-1-default-pool-c04de8f1-mz3q   Ready    <none>   78s   v1.13.7-gke.24
 ```
 
 ## Anchore Helm Chart
@@ -25,9 +25,9 @@ Anchore maintains a [Helm chart](https://github.com/helm/charts/tree/master/stab
 - PostgreSQL (9.6.2)
 - Redis (4)
 
-To make the necessary configurations to the Helm chart, create a custom `anchore_values.yaml` file and reference it during installation. There are many options for configuration with Anchore, this document is intended to cover the minimum required changes to successfully install Anchore Enterprise on Amazon EKS. 
+To make the necessary configurations to the Helm chart, create a custom `anchore_values.yaml` file and reference it during installation. There are many options for configuration with Anchore, this document is intended to cover the minimum required changes to successfully install Anchore Enterprise on Google Kubernetes Engine. 
 
-**Note:** For this installation, an ALB ingress controller will be used You can read more about Kubernetes Ingress with AWS ALB Ingress Controller [here](https://aws.amazon.com/blogs/opensource/kubernetes-ingress-aws-alb-ingress-controller/)
+**Note:** For this installation, a GKE ingress controller will be used You can read more about Kubernetes Ingress with a GKE Ingress Controller [here](https://cloud.google.com/kubernetes-engine/docs/concepts/ingress)
 
 ### Configurations
 
@@ -48,9 +48,6 @@ ingress:
     #   - anchore-api.example.com
     # uiHosts:
     #   - anchore-ui.example.com
-  annotations:
-    kubernetes.io/ingress.class: alb
-    alb.ingress.kubernetes.io/scheme: internet-facing
 ```
 
 #### Anchore Engine API Service
@@ -95,37 +92,6 @@ anchoreEnterpriseUi:
 
 **Note:** Changed service type to NodePort.
 
-### AWS EKS Configurations
-
-#### Create the IAM policy to give the Ingress controller the right permissions:
-
-1. Go to the IAM Console.
-2. Choose the section **Roles** and search for the NodeInstanceRole of your EKS worker nodes. 
-3. Create and attach a policy using the contents of the template [iam-policy.json](https://raw.githubusercontent.com/kubernetes-sigs/aws-alb-ingress-controller/v1.0.0/docs/examples/iam-policy.json)
-
-Deploy RBAC Roles and RoleBindings needed by the AWS ALB Ingress controller from the template below:
-
-`wget https://raw.githubusercontent.com/kubernetes-sigs/aws-alb-ingress-controller/v1.0.0/docs/examples/rbac-role.yaml`
-
-`kubectl apply -f https://raw.githubusercontent.com/kubernetes-sigs/aws-alb-ingress-controller/v1.0.0/docs/examples/rbac-role.yaml`
-
-#### Update ALB Ingress 
-
-Download the ALB Ingress manifest and update the `cluster-name` section with the name of your EKS cluster name. 
-
-`wget https://raw.githubusercontent.com/kubernetes-sigs/aws-alb-ingress-controller/v1.0.1/docs/examples/alb-ingress-controller.yaml`
-
-```
-# Name of your cluster. Used when naming resources created
-            # by the ALB Ingress Controller, providing distinction between
-            # clusters.
-            - --cluster-name=anchore-prod
-```
-
-Deploy the AWS ALB Ingress controller YAML:
-
-`kubectl apply -f alb-ingress-controller.yaml`
-
 ### Anchore Enterprise installation
 
 #### Create secrets
@@ -149,16 +115,16 @@ It will take the system several minutes to bootstrap. You can checks on the stat
 ```
 $ kubectl get pods
 NAME                                                              READY   STATUS    RESTARTS   AGE
-anchore-enterprise-anchore-engine-analyzer-6865f45bdc-6tgww       1/1     Running   0          13m
-anchore-enterprise-anchore-engine-api-6f6c4bd6bd-nvzh9            4/4     Running   0          13m
-anchore-enterprise-anchore-engine-catalog-576795b8df-9drxg        1/1     Running   0          13m
-anchore-enterprise-anchore-engine-enterprise-feeds-67f44645kr46   1/1     Running   0          13m
-anchore-enterprise-anchore-engine-enterprise-ui-6854ff4454zn4bz   1/1     Running   0          13m
-anchore-enterprise-anchore-engine-policy-6dd9896c97-nwcbx         1/1     Running   0          13m
-anchore-enterprise-anchore-engine-simplequeue-7744778576-th54t    1/1     Running   0          13m
-anchore-enterprise-anchore-feeds-db-7d66cdd68d-q8tfc              1/1     Running   0          13m
-anchore-enterprise-anchore-ui-redis-master-0                      1/1     Running   0          13m
-anchore-enterprise-postgresql-86d5488c9b-rvqb6                    1/1     Running   0          13m
+anchore-enterprise-anchore-engine-analyzer-75679f559b-tnpkv       1/1     Running   0          15m
+anchore-enterprise-anchore-engine-api-7ffd6b88f7-nkhtl            4/4     Running   0          15m
+anchore-enterprise-anchore-engine-catalog-6db78fdf84-s25wl        1/1     Running   0          15m
+anchore-enterprise-anchore-engine-enterprise-feeds-79d9c8bjqzr6   1/1     Running   0          15m
+anchore-enterprise-anchore-engine-enterprise-ui-868d9bd5b5bddzd   1/1     Running   0          15m
+anchore-enterprise-anchore-engine-policy-79cff7dcbd-ptjvh         1/1     Running   0          15m
+anchore-enterprise-anchore-engine-simplequeue-77468954f5-48h5g    1/1     Running   0          15m
+anchore-enterprise-anchore-feeds-db-8c8686fd7-k9pk5               1/1     Running   0          15m
+anchore-enterprise-anchore-ui-redis-master-0                      1/1     Running   0          15m
+anchore-enterprise-postgresql-57f65cb6d5-k7px5                    1/1     Running   0          15m
 ```
 
 Run the following command for details on the deployed ingress resource:
@@ -167,23 +133,25 @@ Run the following command for details on the deployed ingress resource:
 $ kubectl describe ingress
 Name:             anchore-enterprise-anchore-engine
 Namespace:        default
-Address:          xxxxxxx-default-anchoreen-xxxx-xxxxxxxxx.us-east-1.elb.amazonaws.com
-Default backend:  default-http-backend:80 (<none>)
+Address:          34.96.64.148
+Default backend:  default-http-backend:80 (10.8.2.6:8080)
 Rules:
   Host  Path  Backends
   ----  ----  --------
   *     
-        /v1/*   anchore-enterprise-anchore-engine-api:8228 (192.168.42.122:8228)
-        /*      anchore-enterprise-anchore-engine-enterprise-ui:80 (192.168.14.212:3000)
+        /v1/*   anchore-enterprise-anchore-engine-api:8228 (<none>)
+        /*      anchore-enterprise-anchore-engine-enterprise-ui:80 (<none>)
 Annotations:
-  alb.ingress.kubernetes.io/scheme:  internet-facing
-  kubernetes.io/ingress.class:       alb
+  kubernetes.io/ingress.class:            gce
+  ingress.kubernetes.io/backends:         {"k8s-be-31175--55c0399dc5755377":"HEALTHY","k8s-be-31274--55c0399dc5755377":"HEALTHY","k8s-be-32037--55c0399dc5755377":"HEALTHY"}
+  ingress.kubernetes.io/forwarding-rule:  k8s-fw-default-anchore-enterprise-anchore-engine--55c0399dc5750
+  ingress.kubernetes.io/target-proxy:     k8s-tp-default-anchore-enterprise-anchore-engine--55c0399dc5750
+  ingress.kubernetes.io/url-map:          k8s-um-default-anchore-enterprise-anchore-engine--55c0399dc5750
 Events:
-  Type    Reason  Age   From                    Message
-  ----    ------  ----  ----                    -------
-  Normal  CREATE  14m   alb-ingress-controller  LoadBalancer 904f0f3b-default-anchoreen-d4c9 created, ARN: arn:aws:elasticloadbalancing:us-east-1:077257324153:loadbalancer/app/904f0f3b-default-anchoreen-d4c9/4b0e9de48f13daac
-  Normal  CREATE  14m   alb-ingress-controller  rule 1 created with conditions [{    Field: "path-pattern",    Values: ["/v1/*"]  }]
-  Normal  CREATE  14m   alb-ingress-controller  rule 2 created with conditions [{    Field: "path-pattern",    Values: ["/*"]  }]
+  Type    Reason  Age   From                     Message
+  ----    ------  ----  ----                     -------
+  Normal  ADD     15m   loadbalancer-controller  default/anchore-enterprise-anchore-engine
+  Normal  CREATE  14m   loadbalancer-controller  ip: 34.96.64.148
 ```
 
 TThe output above shows that an ELB has been created. Navigate to the specified URL in a browser:
@@ -195,15 +163,15 @@ TThe output above shows that an ELB has been created. Navigate to the specified 
 Check the status of the system to verify all of the Anchore services are up:
 
 ```
-$ anchore-cli --url http://xxxxxx-default-anchoreen-xxxx-xxxxxxxxxx.us-east-1.elb.amazonaws.com/v1/ --u admin --p foobar system status
-Service apiext (anchore-enterprise-anchore-engine-api-6f6c4bd6bd-nvzh9, http://anchore-enterprise-anchore-engine-api:8228): up
-Service rbac_authorizer (anchore-enterprise-anchore-engine-api-6f6c4bd6bd-nvzh9, http://localhost:8089): up
-Service reports (anchore-enterprise-anchore-engine-api-6f6c4bd6bd-nvzh9, http://anchore-enterprise-anchore-engine-enterprise-reports:8558): up
-Service rbac_manager (anchore-enterprise-anchore-engine-api-6f6c4bd6bd-nvzh9, http://anchore-enterprise-anchore-engine-api:8229): up
-Service policy_engine (anchore-enterprise-anchore-engine-policy-6dd9896c97-nwcbx, http://anchore-enterprise-anchore-engine-policy:8087): up
-Service analyzer (anchore-enterprise-anchore-engine-analyzer-6865f45bdc-6tgww, http://anchore-enterprise-anchore-engine-analyzer:8084): up
-Service simplequeue (anchore-enterprise-anchore-engine-simplequeue-7744778576-th54t, http://anchore-enterprise-anchore-engine-simplequeue:8083): up
-Service catalog (anchore-enterprise-anchore-engine-catalog-576795b8df-9drxg, http://anchore-enterprise-anchore-engine-catalog:8082): up
+$ anchore-cli --url http://34.96.64.148/v1/ --u admin --p foobar system status
+Service catalog (anchore-enterprise-anchore-engine-catalog-6db78fdf84-s25wl, http://anchore-enterprise-anchore-engine-catalog:8082): up
+Service apiext (anchore-enterprise-anchore-engine-api-7ffd6b88f7-nkhtl, http://anchore-enterprise-anchore-engine-api:8228): up
+Service reports (anchore-enterprise-anchore-engine-api-7ffd6b88f7-nkhtl, http://anchore-enterprise-anchore-engine-enterprise-reports:8558): up
+Service rbac_authorizer (anchore-enterprise-anchore-engine-api-7ffd6b88f7-nkhtl, http://localhost:8089): up
+Service rbac_manager (anchore-enterprise-anchore-engine-api-7ffd6b88f7-nkhtl, http://anchore-enterprise-anchore-engine-api:8229): up
+Service analyzer (anchore-enterprise-anchore-engine-analyzer-75679f559b-tnpkv, http://anchore-enterprise-anchore-engine-analyzer:8084): up
+Service simplequeue (anchore-enterprise-anchore-engine-simplequeue-77468954f5-48h5g, http://anchore-enterprise-anchore-engine-simplequeue:8083): up
+Service policy_engine (anchore-enterprise-anchore-engine-policy-79cff7dcbd-ptjvh, http://anchore-enterprise-anchore-engine-policy:8087): up
 
 Engine DB Version: 0.0.11
 Engine Code Version: 0.5.0
@@ -214,7 +182,7 @@ Engine Code Version: 0.5.0
 It can take some time to fetch all of the vulnerability feeds from the upstream data sources. Check on the status of feeds:
 
 ```
-$ anchore-cli --url http://xxxxxx-default-anchoreen-xxxx-xxxxxxxxxx.us-east-1.elb.amazonaws.com/v1/ --u admin --p foobar system feeds list
+$ anchore-cli --url http://34.96.64.148/v1/ --u admin --p foobar system feeds list
 ```
 
 **Note:** It is not uncommon for the above command to return a: `[]` as the initial feed sync occurs. 
