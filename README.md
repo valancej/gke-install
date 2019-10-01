@@ -1,6 +1,6 @@
 # Installing Anchore Enterprise on GKE
 
-This document will walkthrough the installation of Anchore Enterprise on an Google Kubernetes Engine (GKE) cluster. 
+This document will walkthrough the installation of Anchore Enterprise on a Google Kubernetes Engine (GKE) cluster. 
 
 ## Prerequisites
 
